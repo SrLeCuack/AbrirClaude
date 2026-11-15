@@ -84,5 +84,5 @@ Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedP
 Step 'Installing | Instalando'
 Get-AppxPackage AbrirClaude.TeclaCopilot | Remove-AppxPackage
 Add-AppxPackage $msix
-Write-Host 'Done. Settings > Personalization > Text input > Copilot key > "Abrir Claude"' -ForegroundColor Green
-Write-Host 'Listo. Configuración > Personalización > Entrada de texto > Tecla Copilot > "Abrir Claude"' -ForegroundColor Green
+Write-Host 'Done. Settings > Personalization > Text input > Copilot key > "Claude (consulta rapida)"' -ForegroundColor Green
+Write-Host 'Listo. Configuración > Personalización > Entrada de texto > Tecla Copilot > "Claude (consulta rapida)"' -ForegroundColor Green
