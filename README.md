@@ -43,6 +43,10 @@ Press the Copilot key → the Quick Entry box appears → ask → done.
 
 To only build the `.msix` without installing it: `.\build.ps1 -NoInstall`
 
+Admin is only needed the first time, to trust the certificate. After that, `build.ps1` installs updates without admin.
+
+**Icon:** if the Claude app is installed, `build.ps1` copies the Claude logo from **your own installation** at build time, so the logo is not included in this repo. Use `.\build.ps1 -GenericIcons` to keep the generic "?" icon.
+
 ### Customize
 - **Different shortcut:** if you changed Claude's Quick Entry shortcut, edit the `keybd_event` lines in `src/AbrirClaude.cs` and run `build.ps1` again.
 - **Another assistant (ChatGPT, etc.):** change `ClaudeAumid`, `ClaudeExeMarker` and the keys that get sent (for example, ChatGPT uses `Alt+Space`).
@@ -104,6 +108,10 @@ Presionas la tecla Copilot → aparece el recuadro → preguntas → listo.
 3. Ve a **Configuración → Personalización → Entrada de texto → Tecla Copilot** y elige **"Claude (consulta rapida)"**.
 
 Para solo generar el `.msix` sin instalarlo: `.\build.ps1 -NoInstall`
+
+Solo se necesita administrador la primera vez, para confiar en el certificado. Después, `build.ps1` instala las actualizaciones sin administrador.
+
+**Ícono:** si tienes la app de Claude instalada, `build.ps1` copia el logo de Claude desde **tu propia instalación** al compilar, así que el logo no viene en este repo. Usa `.\build.ps1 -GenericIcons` para dejar el ícono genérico "?".
 
 ### Personalizar
 - **Otro atajo:** si cambiaste el atajo de la consulta rápida en Claude, edita las líneas `keybd_event` en `src/AbrirClaude.cs` y vuelve a correr `build.ps1`.

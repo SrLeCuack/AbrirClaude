@@ -7,7 +7,14 @@
 # ES: Ejecuta desde PowerShell como ADMINISTRADOR (para confiar en el certificado):
 #       powershell -ExecutionPolicy Bypass -File .\build.ps1
 #     Usa -NoInstall para solo generar build\AbrirClaude.msix.
-param([switch]$NoInstall)
+#
+# EN: Icons: if the Claude app is installed, its logo is copied from YOUR local
+#     installation at build time (it is not included in this repo). Use
+#     -GenericIcons to keep the generic "?" icons.
+# ES: Iconos: si tienes la app de Claude instalada, se copia su logo desde TU
+#     instalación al compilar (no viene en este repo). Usa -GenericIcons para
+#     dejar los iconos genéricos "?".
+param([switch]$NoInstall, [switch]$GenericIcons)
 $ErrorActionPreference = 'Stop'
 $root    = $PSScriptRoot
 $build   = Join-Path $root 'build'
@@ -57,6 +64,14 @@ if ($LASTEXITCODE) { throw 'Compile failed | Falló la compilación' }
 # 3. Package layout + pack / Armar y empaquetar
 Step 'Packing MSIX | Empaquetando MSIX'
 Copy-Item (Join-Path $root 'package\*') $layout -Recurse -Force
+$claudePkg = Get-AppxPackage AnthropicPBC.Claude -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $GenericIcons -and $claudePkg) {
+    foreach ($icon in 'Square150x150Logo.png', 'Square44x44Logo.png', 'StoreLogo.png') {
+        $from = Join-Path $claudePkg.InstallLocation "assets\$icon"
+        if (Test-Path $from) { Copy-Item $from (Join-Path $layout "Assets\$icon") -Force }
+    }
+    Write-Host '    Using Claude logo from local install | Usando el logo de Claude de tu instalacion'
+}
 & $makeappx pack /o /d $layout /p $msix | Out-Null
 if ($LASTEXITCODE) { throw 'makeappx failed | falló makeappx' }
 
@@ -74,15 +89,19 @@ Write-Host "OK: $msix" -ForegroundColor Green
 if ($NoInstall) { return }
 
 # 5. Trust cert + install / Confiar en el certificado e instalar
-$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { throw 'Run as Administrator to install | Ejecuta como Administrador para instalar' }
-Step 'Trusting certificate | Confiando en el certificado (LocalMachine\TrustedPeople)'
-$cer = Join-Path $build 'AbrirClaude.cer'
-Export-Certificate -Cert $cert -FilePath $cer | Out-Null
-Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+# EN: Admin is only needed the first time (to trust the certificate).
+# ES: Solo se necesita administrador la primera vez (para confiar en el certificado).
+if (-not (Test-Path "Cert:\LocalMachine\TrustedPeople\$($cert.Thumbprint)")) {
+    $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $admin) { throw 'Run as Administrator to install | Ejecuta como Administrador para instalar' }
+    Step 'Trusting certificate | Confiando en el certificado (LocalMachine\TrustedPeople)'
+    $cer = Join-Path $build 'AbrirClaude.cer'
+    Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+    Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+}
 
 Step 'Installing | Instalando'
-Get-AppxPackage AbrirClaude.TeclaCopilot | Remove-AppxPackage
-Add-AppxPackage $msix
+try { Add-AppxPackage $msix -ForceUpdateFromAnyVersion }
+catch { Get-AppxPackage AbrirClaude.TeclaCopilot | Remove-AppxPackage; Add-AppxPackage $msix }
 Write-Host 'Done. Settings > Personalization > Text input > Copilot key > "Claude (consulta rapida)"' -ForegroundColor Green
 Write-Host 'Listo. Configuración > Personalización > Entrada de texto > Tecla Copilot > "Claude (consulta rapida)"' -ForegroundColor Green
