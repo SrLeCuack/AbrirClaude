@@ -1,0 +1,1 @@
+Carpeta publica requerida por la extension de la tecla Copilot.

@@ -1,0 +1,6 @@
+build/
+tools/
+*.msix
+*.pfx
+*.cer
+*.exe
